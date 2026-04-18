@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pink's Windows — Field Quote Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink: #F9ABAC;
+    --pink-dark: #e8898a;
+    --pink-light: rgba(249,171,172,0.12);
+    --pink-mid: rgba(249,171,172,0.25);
+    --navy: #003953;
+    --navy-mid: #00486a;
+    --navy-light: #005580;
+    --cream: #EFE8DF;
+    --cream-dim: rgba(239,232,223,0.65);
+    --cream-faint: rgba(239,232,223,0.12);
+    --white: #ffffff;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--cream);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: rgba(0,0,0,0.25);
+    border-bottom: 1px solid rgba(249,171,172,0.18);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .header-logo { height: 44px; width: auto; }
+
+  .header-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--pink);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(249,171,172,0.35);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  .page-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--pink);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .page-sub {
+    font-size: 14px;
+    color: var(--cream-dim);
+    margin-bottom: 2.5rem;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--pink);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+    margin-top: 2rem;
+  }
+
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ---- TABS ---- */
+  .tab-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    border: 1.5px solid rgba(239,232,223,0.15);
+    border-radius: var(--radius);
+    background: rgba(0,0,0,0.2);
+    color: var(--cream-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .tab-btn.active {
+    border-color: var(--pink);
+    background: var(--pink-light);
+    color: var(--pink);
+  }
+
+  .tab-btn:hover:not(.active) {
+    border-color: rgba(249,171,172,0.35);
+    color: var(--cream);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---- HOUSE BUTTONS ---- */
+  .house-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .opt-btn {
+    background: rgba(0,0,0,0.2);
+    border: 1.5px solid rgba(239,232,223,0.15);
+    border-radius: var(--radius);
+    padding: 13px 14px;
+    font-size: 14px;
+    color: var(--cream);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.4;
+    width: 100%;
+  }
+
+  .opt-btn:hover:not(.selected) {
+    border-color: rgba(249,171,172,0.4);
+    background: rgba(249,171,172,0.06);
+  }
+
+  .opt-btn.selected {
+    border-color: var(--pink);
+    background: var(--pink-light);
+  }
+
+  .opt-label {
+    font-weight: 600;
+    font-size: 14px;
+    display: block;
+    color: var(--cream);
+  }
+
+  .opt-sub {
+    font-size: 11.5px;
+    color: var(--cream-dim);
+    display: block;
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .opt-btn.selected .opt-label { color: var(--pink); }
+  .opt-btn.selected .opt-sub { color: rgba(249,171,172,0.7); }
+
+  /* ---- SQFT INPUT ---- */
+  .sqft-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sqft-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .sqft-field {
+    flex: 1;
+  }
+
+  .field-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cream-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    border: 1.5px solid rgba(239,232,223,0.15);
+    border-radius: var(--radius);
+    background: rgba(0,0,0,0.2);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+    transition: border-color 0.15s;
+  }
+
+  .text-input:focus {
+    outline: none;
+    border-color: var(--pink);
+  }
+
+  .text-input::placeholder {
+    color: rgba(239,232,223,0.3);
+  }
+
+  .stories-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+
+  .stories-btn {
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    border: 1.5px solid rgba(239,232,223,0.15);
+    border-radius: var(--radius);
+    background: rgba(0,0,0,0.2);
+    color: var(--cream-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .stories-btn.selected {
+    border-color: var(--pink);
+    background: var(--pink-light);
+    color: var(--pink);
+  }
+
+  .stories-btn:hover:not(.selected) {
+    border-color: rgba(249,171,172,0.35);
+    color: var(--cream);
+  }
+
+  .sqft-hint {
+    font-size: 12px;
+    color: var(--cream-dim);
+    font-family: 'DM Mono', monospace;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.15);
+    border-radius: var(--radius);
+    border: 1px solid rgba(239,232,223,0.08);
+    line-height: 1.6;
+  }
+
+  .sqft-hint span {
+    color: var(--pink);
+    font-weight: 500;
+  }
+
+  /* ---- TIME INPUT ---- */
+  .time-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .time-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .time-input-row .text-input {
+    max-width: 140px;
+  }
+
+  .time-unit {
+    font-size: 14px;
+    color: var(--cream-dim);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  /* ---- TYPE GRID ---- */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* ---- ADDON LIST ---- */
+  .addon-list {
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius);
+    border: 1.5px solid rgba(239,232,223,0.15);
+    overflow: hidden;
+  }
+
+  .addon-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid rgba(239,232,223,0.08);
+    transition: background 0.1s;
+  }
+
+  .addon-row:last-child { border-bottom: none; }
+  .addon-row:hover { background: rgba(249,171,172,0.06); }
+
+  .addon-check {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--pink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .addon-label {
+    font-size: 14px;
+    color: var(--cream);
+    flex: 1;
+    cursor: pointer;
+  }
+
+  .addon-price {
+    font-size: 12px;
+    color: var(--pink);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+    opacity: 0.8;
+  }
+
+  .count-row {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 10px 45px;
+    background: rgba(0,0,0,0.15);
+    border-bottom: 1px solid rgba(239,232,223,0.08);
+  }
+
+  .count-row.visible { display: flex; }
+
+  .count-label {
+    font-size: 13px;
+    color: var(--cream-dim);
+    flex: 1;
+  }
+
+  .count-input {
+    width: 72px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1.5px solid rgba(239,232,223,0.2);
+    border-radius: 6px;
+    background: rgba(0,0,0,0.3);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+  }
+
+  .count-input:focus { outline: none; border-color: var(--pink); }
+
+  /* ---- ZIP ---- */
+  .zip-input {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 15px;
+    border: 1.5px solid rgba(239,232,223,0.15);
+    border-radius: var(--radius);
+    background: rgba(0,0,0,0.2);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    transition: border-color 0.15s;
+  }
+
+  .zip-input:focus { outline: none; border-color: var(--pink); }
+  .zip-input::placeholder { color: rgba(239,232,223,0.3); letter-spacing: 0.04em; }
+
+  /* ---- DIVIDER ---- */
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(239,232,223,0.1);
+    margin: 2.5rem 0;
+  }
+
+  /* ---- RESULT CARD ---- */
+  .result-card {
+    background: linear-gradient(135deg, rgba(249,171,172,0.15) 0%, rgba(0,57,83,0.6) 100%);
+    border: 1.5px solid rgba(249,171,172,0.3);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(249,171,172,0.18) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .result-price {
+    font-size: 46px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .result-sub {
+    font-size: 13px;
+    color: var(--cream-dim);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 14px;
+  }
+
+  .result-meta {
+    font-size: 12px;
+    color: rgba(249,171,172,0.7);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+
+  .badge-virtual {
+    background: rgba(249,171,172,0.18);
+    color: var(--pink);
+    border: 1px solid rgba(249,171,172,0.3);
+  }
+
+  .badge-inperson {
+    background: rgba(239,232,223,0.1);
+    color: var(--cream);
+    border: 1px solid rgba(239,232,223,0.2);
+  }
+
+  .badge-commercial {
+    background: rgba(249,171,172,0.18);
+    color: var(--pink);
+    border: 1px solid rgba(249,171,172,0.3);
+  }
+
+  .badge-zone {
+    background: rgba(0,0,0,0.25);
+    color: var(--cream-dim);
+    border: 1px solid rgba(239,232,223,0.15);
+  }
+
+  /* ---- RULES CARD ---- */
+  .rules-card {
+    background: rgba(0,0,0,0.25);
+    border: 1.5px solid rgba(239,232,223,0.1);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .rules-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--pink);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .rule {
+    font-size: 14px;
+    color: var(--cream-dim);
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(239,232,223,0.07);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .rule:last-child { border-bottom: none; }
+
+  .rule::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--pink);
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  /* ---- EMPTY STATE ---- */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--cream-dim);
+    font-size: 14px;
+  }
+
+  .empty-icon {
+    display: block;
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+
+  /* ---- SCOPE ---- */
+  .scope-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .scope-btn {
+    background: rgba(0,0,0,0.2);
+    border: 1.5px solid rgba(239,232,223,0.15);
+    border-radius: var(--radius);
+    padding: 13px 14px;
+    font-size: 14px;
+    color: var(--cream);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .scope-btn:hover { border-color: rgba(249,171,172,0.4); background: rgba(249,171,172,0.06); }
+  .scope-btn.selected { border-color: var(--pink); background: var(--pink-light); }
+
+  .scope-check {
+    width: 17px; height: 17px;
+    accent-color: var(--pink);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .scope-text { flex: 1; }
+
+  .scope-label {
+    font-weight: 600;
+    font-size: 14px;
+    display: block;
+    color: var(--cream);
+  }
+
+  .scope-sub {
+    font-size: 11.5px;
+    color: var(--cream-dim);
+    display: block;
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .scope-btn.selected .scope-label { color: var(--pink); }
+  .scope-btn.selected .scope-sub { color: rgba(249,171,172,0.7); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: rgba(239,232,223,0.25);
+    letter-spacing: 0.06em;
+    border-top: 1px solid rgba(239,232,223,0.07);
+  }
+
+  @media (max-width: 480px) {
+    header { padding: 0.85rem 1rem; }
+    .header-logo { height: 36px; }
+    main { padding: 1.75rem 1rem 4rem; }
+    .page-title { font-size: 22px; }
+    .result-price { font-size: 36px; }
+    .type-grid { grid-template-columns: 1fr 1fr; }
+    .stories-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="header-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAC1CAYAAABxqan9AAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAACCkklEQVR42u19eZhcVZn+OffW0lv2PSGQsINYDeiASABBQdy1Iy4M4hJ1FEX9jejoTBO3Nike..." alt="Pink's Window Services">
+  <span class="header-tag">Field Tool</span>
+</header>
+
+<main>
+  <p class="page-eyebrow">Quick Quote</p>
+  <p class="page-title">Build the Quote</p>
+  <p class="page-sub">Enter square footage, time estimate, or pick a house size. Takes under 60 seconds.</p>
+
+  <!-- SIZE INPUT SECTION -->
+  <p class="section-label">Job size</p>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('house')">House type</button>
+    <button class="tab-btn" onclick="switchTab('sqft')">Square footage</button>
+    <button class="tab-btn" onclick="switchTab('time')">Time estimate</button>
+  </div>
+
+  <!-- HOUSE TYPE TAB -->
+  <div class="tab-panel active" id="tab-house">
+    <div class="house-grid" id="house-grid">
+      <button class="opt-btn" data-time="1.25" onclick="selectHouse(this)">
+        <span class="opt-label">Small 1-story</span>
+        <span class="opt-sub">~1,200–1,800 sq ft &middot; 1–1.5 hrs</span>
+      </button>
+      <button class="opt-btn" data-time="1.75" onclick="selectHouse(this)">
+        <span class="opt-label">Medium 1-story</span>
+        <span class="opt-sub">~1,800–2,500 sq ft &middot; 1.5–2 hrs</span>
+      </button>
+      <button class="opt-btn" data-time="2.25" onclick="selectHouse(this)">
+        <span class="opt-label">Large 1-story</span>
+        <span class="opt-sub">~2,500–3,500 sq ft &middot; 2–2.5 hrs</span>
+      </button>
+      <button class="opt-btn" data-time="2.25" onclick="selectHouse(this)">
+        <span class="opt-label">Small 2-story</span>
+        <span class="opt-sub">~1,800–2,500 sq ft &middot; 2–2.5 hrs</span>
+      </button>
+      <button class="opt-btn" data-time="2.75" onclick="selectHouse(this)">
+        <span class="opt-label">Medium 2-story</span>
+        <span class="opt-sub">~2,500–3,500 sq ft &middot; 2.5–3 hrs</span>
+      </button>
+      <button class="opt-btn" data-time="3.5" onclick="selectHouse(this)">
+        <span class="opt-label">Large 2-story</span>
+        <span class="opt-sub">~3,500–5,000 sq ft &middot; 3–4 hrs</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SQUARE FOOTAGE TAB -->
+  <div class="tab-panel" id="tab-sqft">
+    <div class="sqft-wrap">
+      <div class="sqft-row">
+        <div class="sqft-field">
+          <span class="field-label">Square footage</span>
+          <input type="number" class="text-input" id="sqft-input" placeholder="e.g. 2400" min="500" max="15000" oninput="calcFromSqft()">
+        </div>
+        <div class="sqft-field">
+          <span class="field-label">Stories</span>
+          <div class="stories-grid">
+            <button class="stories-btn selected" data-stories="1" onclick="selectStories(this)">1</button>
+            <button class="stories-btn" data-stories="2" onclick="selectStories(this)">2</button>
+            <button class="stories-btn" data-stories="3" onclick="selectStories(this)">3+</button>
+          </div>
+        </div>
+      </div>
+      <div class="sqft-hint" id="sqft-hint" style="display:none;">
+        Estimated time: <span id="sqft-time-display">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIME ESTIMATE TAB -->
+  <div class="tab-panel" id="tab-time">
+    <div class="time-wrap">
+      <div>
+        <span class="field-label">Estimated hours on site</span>
+        <div class="time-input-row">
+          <input type="number" class="text-input" id="time-input" placeholder="e.g. 2.5" min="0.5" max="12" step="0.25" oninput="calcFromTime()">
+          <span class="time-unit">hours</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOB TYPE -->
+  <p class="section-label">Job type</p>
+  <div class="type-grid" id="type-grid">
+    <button class="opt-btn selected" data-type="residential" onclick="selectType(this)">
+      <span class="opt-label">Residential</span>
+    </button>
+    <button class="opt-btn" data-type="commercial" onclick="selectType(this)">
+      <span class="opt-label">Commercial</span>
+    </button>
+    <button class="opt-btn" data-type="addon" onclick="selectType(this)">
+      <span class="opt-label">Add-on only</span>
+    </button>
+  </div>
+
+  <!-- SCOPE -->
+  <p class="section-label">Scope of work</p>
+  <div class="scope-grid">
+    <label class="scope-btn selected" id="scope-ext-btn">
+      <input type="checkbox" class="scope-check" id="scope-ext" checked onchange="toggleScope('ext'); calcPrice();">
+      <span class="scope-text">
+        <span class="scope-label">Exterior</span>
+        <span class="scope-sub">70% of window price</span>
+      </span>
+    </label>
+    <label class="scope-btn" id="scope-int-btn">
+      <input type="checkbox" class="scope-check" id="scope-int" onchange="toggleScope('int'); calcPrice();">
+      <span class="scope-text">
+        <span class="scope-label">Interior</span>
+        <span class="scope-sub">30% of window price</span>
+      </span>
+    </label>
+  </div>
+
+  <!-- ADD-ONS -->
+  <p class="section-label">Add-ons</p>
+  <div class="addon-list">
+    <div class="addon-row">
+      <input type="checkbox" class="addon-check" id="screens" onchange="toggleCount('screen-count-row', this); calcPrice();">
+      <label class="addon-label" for="screens">Screen cleaning</label>
+      <span class="addon-price">$3–5 each</span>
+    </div>
+    <div class="count-row" id="screen-count-row">
+      <span class="count-label">Number of screens</span>
+      <input type="number" class="count-input" id="screen-count" value="10" min="1" max="100" onchange="calcPrice()">
+    </div>
+    <div class="addon-row">
+      <input type="checkbox" class="addon-check" id="tracks" onchange="toggleCount('track-count-row', this); calcPrice();">
+      <label class="addon-label" for="tracks">Track detailing</label>
+      <span class="addon-price">$3–6 per track</span>
+    </div>
+    <div class="count-row" id="track-count-row">
+      <span class="count-label">Number of tracks</span>
+      <input type="number" class="count-input" id="track-count" value="10" min="1" max="100" onchange="calcPrice()">
+    </div>
+    <div class="addon-row">
+      <input type="checkbox" class="addon-check" id="hardwater" onchange="toggleCount('hw-count-row', this); calcPrice();">
+      <label class="addon-label" for="hardwater">Hard water removal</label>
+      <span class="addon-price">$25–50 per window</span>
+    </div>
+    <div class="count-row" id="hw-count-row">
+      <span class="count-label">Number of windows</span>
+      <input type="number" class="count-input" id="hw-count" value="5" min="1" max="100" onchange="calcPrice()">
+    </div>
+    <div class="addon-row">
+      <input type="checkbox" class="addon-check" id="ladder" onchange="calcPrice()">
+      <label class="addon-label" for="ladder">Ladder work over 2 stories</label>
+      <span class="addon-price">+15–20%</span>
+    </div>
+    <div class="addon-row">
+      <input type="checkbox" class="addon-check" id="construction" onchange="calcPrice()">
+      <label class="addon-label" for="construction">Construction cleanup</label>
+      <span class="addon-price">+50–100%</span>
+    </div>
+  </div>
+
+  <!-- ZIP -->
+  <p class="section-label">Customer zip code</p>
+  <input type="text" class="zip-input" id="zip-input" maxlength="5" placeholder="e.g. 87111" oninput="calcPrice()">
+
+  <hr class="divider">
+
+  <div id="result-area">
+    <div class="empty-state">
+      <span class="empty-icon">&#9633;</span>
+      Enter job size above to see the quote.
+    </div>
+  </div>
+
+</main>
+
+<footer>Pink's Windows &mdash; Internal use only</footer>
+
+<script>
+
+// ---- PRICING ----
+// Minimum $200. After that: $175/hr, rounded to nearest dollar.
+// $200 floor applies to anything 1hr or under.
+const RATE = 175;
+const MIN_PRICE = 200;
+
+function getBasePrice(hours) {
+  if (hours <= 0) return 0;
+  const raw = hours * RATE;
+  return Math.max(MIN_PRICE, Math.round(raw));
+}
+
+// ---- SQFT -> HOURS conversion ----
+// Based on original house-type time estimates.
+// 1-story: roughly 1 hr per 1,000 sqft, starting at ~1 hr for small homes.
+// 2-story: add ~25% for same sqft due to complexity.
+// 3-story: add ~50% over 1-story.
+function sqftToHours(sqft, stories) {
+  let base;
+  if (sqft <= 1000) base = 1.0;
+  else if (sqft <= 1500) base = 1.0 + (sqft - 1000) / 500 * 0.25;   // 1.0–1.25
+  else if (sqft <= 2000) base = 1.25 + (sqft - 1500) / 500 * 0.5;   // 1.25–1.75
+  else if (sqft <= 2500) base = 1.75 + (sqft - 2000) / 500 * 0.5;   // 1.75–2.25
+  else if (sqft <= 3000) base = 2.25 + (sqft - 2500) / 500 * 0.5;   // 2.25–2.75
+  else if (sqft <= 4000) base = 2.75 + (sqft - 3000) / 1000 * 0.75; // 2.75–3.5
+  else if (sqft <= 5000) base = 3.5 + (sqft - 4000) / 1000 * 0.5;   // 3.5–4.0
+  else if (sqft <= 7000) base = 4.0 + (sqft - 5000) / 2000 * 1.0;   // 4.0–5.0
+  else base = 5.0 + (sqft - 7000) / 3000 * 1.0;                      // 5.0+
+
+  const storyMultiplier = stories === 1 ? 1.0 : stories === 2 ? 1.25 : 1.5;
+  return Math.round(base * storyMultiplier * 4) / 4; // round to nearest 0.25
+}
+
+// ---- STATE ----
+let selectedTime = null;
+let selectedType = 'residential';
+let scopeExt = true;
+let scopeInt = false;
+let selectedStories = 1;
+let activeTab = 'house';
+
+// ---- TABS ----
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn')[['house','sqft','time'].indexOf(tab)].classList.add('active');
+
+  // Clear selection when switching tabs so price resets cleanly
+  if (tab !== 'house') {
+    document.querySelectorAll('#house-grid .opt-btn').forEach(b => b.classList.remove('selected'));
+  }
+  if (tab !== 'sqft') {
+    const si = document.getElementById('sqft-input');
+    if (si) si.value = '';
+    document.getElementById('sqft-hint').style.display = 'none';
+  }
+  if (tab !== 'time') {
+    const ti = document.getElementById('time-input');
+    if (ti) ti.value = '';
+  }
+  selectedTime = null;
+  calcPrice();
+}
+
+// ---- HOUSE BUTTONS ----
+function selectHouse(btn) {
+  document.querySelectorAll('#house-grid .opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedTime = parseFloat(btn.dataset.time);
+  calcPrice();
+}
+
+// ---- SQFT ----
+function selectStories(btn) {
+  document.querySelectorAll('.stories-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedStories = parseInt(btn.dataset.stories);
+  calcFromSqft();
+}
+
+function calcFromSqft() {
+  const sqft = parseFloat(document.getElementById('sqft-input').value);
+  if (!sqft || sqft < 100) {
+    selectedTime = null;
+    document.getElementById('sqft-hint').style.display = 'none';
+    calcPrice();
+    return;
+  }
+  const hrs = sqftToHours(sqft, selectedStories);
+  selectedTime = hrs;
+
+  const hintEl = document.getElementById('sqft-hint');
+  const displayEl = document.getElementById('sqft-time-display');
+  hintEl.style.display = 'block';
+
+  const hrsLabel = hrs === 1 ? '1 hr' : (hrs % 1 === 0 ? hrs + ' hrs' : hrs + ' hrs');
+  displayEl.textContent = hrsLabel + '  ·  base price $' + getBasePrice(hrs).toLocaleString();
+
+  calcPrice();
+}
+
+// ---- TIME ----
+function calcFromTime() {
+  const hrs = parseFloat(document.getElementById('time-input').value);
+  if (!hrs || hrs <= 0) {
+    selectedTime = null;
+    calcPrice();
+    return;
+  }
+  selectedTime = hrs;
+  calcPrice();
+}
+
+// ---- TYPE & SCOPE ----
+function selectType(btn) {
+  document.querySelectorAll('#type-grid .opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedType = btn.dataset.type;
+  calcPrice();
+}
+
+function toggleScope(which) {
+  if (which === 'ext') {
+    scopeExt = document.getElementById('scope-ext').checked;
+    document.getElementById('scope-ext-btn').classList.toggle('selected', scopeExt);
+  } else {
+    scopeInt = document.getElementById('scope-int').checked;
+    document.getElementById('scope-int-btn').classList.toggle('selected', scopeInt);
+  }
+  if (!scopeExt && !scopeInt) {
+    if (which === 'ext') {
+      scopeExt = true;
+      document.getElementById('scope-ext').checked = true;
+      document.getElementById('scope-ext-btn').classList.add('selected');
+    } else {
+      scopeInt = true;
+      document.getElementById('scope-int').checked = true;
+      document.getElementById('scope-int-btn').classList.add('selected');
+    }
+  }
+}
+
+function toggleCount(rowId, checkbox) {
+  document.getElementById(rowId).classList.toggle('visible', checkbox.checked);
+}
+
+// ---- ZONES ----
+const ZONES = {
+  '87109': { zone: 'Zone 1', area: 'NE Heights', day: 'Monday' },
+  '87111': { zone: 'Zone 1', area: 'NE Heights', day: 'Monday' },
+  '87122': { zone: 'Zone 1', area: 'NE Heights', day: 'Monday' },
+  '87112': { zone: 'Zone 1', area: 'NE Heights', day: 'Monday' },
+  '87113': { zone: 'Zone 1', area: 'NE Heights', day: 'Monday' },
+  '87114': { zone: 'Zone 2', area: 'NW / Rio Rancho', day: 'Tuesday' },
+  '87120': { zone: 'Zone 2', area: 'NW / Rio Rancho', day: 'Tuesday' },
+  '87124': { zone: 'Zone 2', area: 'NW / Rio Rancho', day: 'Tuesday' },
+  '87144': { zone: 'Zone 2', area: 'NW / Rio Rancho', day: 'Tuesday' },
+  '87048': { zone: 'Zone 2', area: 'NW / Rio Rancho', day: 'Tuesday' },
+  '87004': { zone: 'Zone 2', area: 'NW / Rio Rancho', day: 'Tuesday' },
+  '87123': { zone: 'Zone 3', area: 'SE / Four Hills', day: 'Wednesday' },
+  '87108': { zone: 'Zone 3', area: 'SE / Four Hills', day: 'Wednesday' },
+  '87106': { zone: 'Zone 3', area: 'SE / Four Hills', day: 'Wednesday' },
+  '87105': { zone: 'Zone 4', area: 'SW / South Valley', day: 'Thursday' },
+  '87121': { zone: 'Zone 4', area: 'SW / South Valley', day: 'Thursday' },
+  '87102': { zone: 'Zone 4/5', area: 'SW / Central', day: 'Thursday or Friday' },
+  '87104': { zone: 'Zone 5', area: 'Central', day: 'Friday' },
+  '87110': { zone: 'Zone 5', area: 'Central', day: 'Friday' },
+  '87107': { zone: 'Zone 5', area: 'Central', day: 'Friday' },
+  '87101': { zone: 'Zone 5', area: 'Central', day: 'Friday' },
+  '87119': { zone: 'Zone 5', area: 'Central', day: 'Friday' }
+};
+
+// ---- MAIN CALC ----
+function calcPrice() {
+  const resultArea = document.getElementById('result-area');
+
+  if (selectedTime === null || selectedTime <= 0) {
+    if (selectedType === 'addon') {
+      // addon-only: skip base price, just calculate add-ons
+    } else {
+      resultArea.innerHTML = '<div class="empty-state"><span class="empty-icon">&#9633;</span>Enter job size above to see the quote.</div>';
+      return;
+    }
+  }
+
+  let basePrice = selectedType === 'addon' ? 0 : getBasePrice(selectedTime);
+
+  // Scope split
+  let scopeMultiplier = 0;
+  let scopeParts = [];
+  if (scopeExt) { scopeMultiplier += 0.70; scopeParts.push('exterior'); }
+  if (scopeInt)  { scopeMultiplier += 0.30; scopeParts.push('interior'); }
+  if (scopeParts.length === 0) { scopeMultiplier = 1; scopeParts.push('exterior'); }
+
+  const scopedBase = selectedType === 'addon' ? 0 : Math.round(basePrice * scopeMultiplier);
+
+  // Add-ons
+  let addLow = 0, addHigh = 0;
+  let addDetails = [];
+
+  if (document.getElementById('screens').checked) {
+    const n = parseInt(document.getElementById('screen-count').value) || 10;
+    addLow += n * 3; addHigh += n * 5;
+    addDetails.push(n + ' screens');
+  }
+  if (document.getElementById('tracks').checked) {
+    const n = parseInt(document.getElementById('track-count').value) || 10;
+    addLow += n * 3; addHigh += n * 6;
+    addDetails.push(n + ' tracks');
+  }
+  if (document.getElementById('hardwater').checked) {
+    const n = parseInt(document.getElementById('hw-count').value) || 5;
+    addLow += n * 25; addHigh += n * 50;
+    addDetails.push(n + ' windows hard water');
+  }
+  if (document.getElementById('ladder').checked) {
+    addLow += Math.round(basePrice * 0.15);
+    addHigh += Math.round(basePrice * 0.20);
+    addDetails.push('ladder surcharge');
+  }
+  if (document.getElementById('construction').checked) {
+    addLow += Math.round(basePrice * 0.50);
+    addHigh += Math.round(basePrice * 1.00);
+    addDetails.push('construction cleanup');
+  }
+
+  let totalLow = scopedBase + addLow;
+  let totalHigh = scopedBase + addHigh;
+
+  // Commercial uplift
+  if (selectedType === 'commercial') {
+    totalLow = Math.round(totalLow * 1.15);
+    totalHigh = Math.round(totalHigh * 1.20);
+  }
+
+  // Meta line (how price was derived)
+  let metaLine = '';
+  if (selectedTime && selectedType !== 'addon') {
+    const hrs = selectedTime;
+    const hrsLabel = hrs % 1 === 0 ? hrs + ' hr' : hrs + ' hrs';
+    metaLine = hrsLabel + ' @ $' + RATE + '/hr' + (basePrice === MIN_PRICE ? ' (min $' + MIN_PRICE + ')' : '');
+  }
+
+  // Badges
+  const scopeBadge = '<span class="badge badge-zone">' + scopeParts.join(' + ') + '</span>';
+  const isVirtual = selectedType === 'residential' && totalLow <= 275;
+  const quoteTypeBadge = selectedType === 'addon' ? '' : isVirtual
+    ? '<span class="badge badge-virtual">Virtual quote</span>'
+    : '<span class="badge badge-inperson">In-person quote</span>';
+  const commercialBadge = selectedType === 'commercial'
+    ? '<span class="badge badge-commercial">Commercial rate (+15–20%)</span>' : '';
+
+  const zip = document.getElementById('zip-input').value.trim();
+  let zoneBadge = '';
+  if (zip.length === 5 && ZONES[zip]) {
+    const z = ZONES[zip];
+    zoneBadge = '<span class="badge badge-zone">' + z.zone + ' &middot; ' + z.area + ' &middot; ' + z.day + '</span>';
+  } else if (zip.length === 5) {
+    zoneBadge = '<span class="badge badge-zone">Outside standard zones &mdash; schedule Friday</span>';
+  }
+
+  const priceDisplay = totalLow === totalHigh
+    ? '$' + totalLow.toLocaleString()
+    : '$' + totalLow.toLocaleString() + ' &ndash; $' + totalHigh.toLocaleString();
+
+  const addOnLine = addDetails.length > 0
+    ? 'Base $' + scopedBase.toLocaleString() + ' + ' + addDetails.join(', ')
+    : selectedType === 'addon'
+      ? 'Add-ons only &middot; no window cleaning'
+      : 'Base $' + scopedBase.toLocaleString() + ' &middot; no add-ons';
+
+  resultArea.innerHTML =
+    '<div class="result-card">' +
+      '<div class="result-price">' + priceDisplay + '</div>' +
+      (metaLine ? '<div class="result-meta">' + metaLine + '</div>' : '') +
+      '<div class="result-sub">' + addOnLine + '</div>' +
+      '<div class="badges">' + scopeBadge + quoteTypeBadge + commercialBadge + zoneBadge + '</div>' +
+    '</div>' +
+    '<div class="rules-card">' +
+      '<div class="rules-title">3 rules. Never break them.</div>' +
+      '<div class="rule">Never quote below the floor estimate.</div>' +
+      '<div class="rule">Always round up if unsure.</div>' +
+      '<div class="rule">Screens are always extra.</div>' +
+    '</div>';
+}
+</script>
+</body>
+</html>
