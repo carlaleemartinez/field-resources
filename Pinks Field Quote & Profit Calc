@@ -459,6 +459,13 @@
   .profit-value { color: var(--cream); font-family: 'DM Mono', monospace; text-align: right; }
   .profit-row.total .profit-label, .profit-row.total .profit-value { color: var(--pink); font-weight: 700; }
   .profit-note { color: var(--cream-dim); font-size: 11px; line-height: 1.5; margin-top: 10px; }
+  .profit-divider { border-top: 1px solid rgba(239,232,223,0.12); margin: 10px 0; }
+  .profit-row.subtotal .profit-label, .profit-row.subtotal .profit-value { color: var(--cream); font-weight: 600; }
+  .profit-row.warning { background: rgba(255,180,70,0.10); margin: 0 -10px; padding: 9px 10px; border-radius: 7px; }
+  .profit-row.good { background: rgba(90,210,150,0.10); margin: 0 -10px; padding: 9px 10px; border-radius: 7px; }
+  .profit-status { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 12px; line-height: 1.45; font-family: 'DM Mono', monospace; }
+  .profit-status.warning { color: #ffd08a; background: rgba(255,180,70,0.10); border: 1px solid rgba(255,180,70,0.25); }
+  .profit-status.good { color: #9ee5bf; background: rgba(90,210,150,0.10); border: 1px solid rgba(90,210,150,0.25); }
 
   @media (max-width: 480px) { .control-grid { grid-template-columns: 1fr; } }
 
@@ -864,11 +871,15 @@
   <p class="section-label">Profit assumptions</p>
   <div class="control-grid">
     <div class="control-field">
-      <label class="field-label" for="payroll-rate">Payroll % of pre-tax price</label>
+      <label class="field-label" for="payroll-rate">Crew gross payroll %</label>
       <input type="number" class="number-input" id="payroll-rate" value="25" min="0" max="100" step="0.1" oninput="calcPrice()">
     </div>
     <div class="control-field">
-      <label class="field-label" for="royalty-rate">Royalty %</label>
+      <label class="field-label" for="payroll-burden-rate">Payroll burden %</label>
+      <input type="number" class="number-input" id="payroll-burden-rate" value="5" min="0" max="100" step="0.1" oninput="calcPrice()">
+    </div>
+    <div class="control-field">
+      <label class="field-label" for="royalty-rate">Royalty / franchise fees %</label>
       <input type="number" class="number-input" id="royalty-rate" value="10" min="0" max="100" step="0.1" oninput="calcPrice()">
     </div>
     <div class="control-field">
@@ -878,6 +889,49 @@
     <div class="control-field">
       <label class="field-label" for="vehicle-supplies">Vehicle & supplies ($)</label>
       <input type="number" class="number-input" id="vehicle-supplies" value="35" min="0" max="1000" step="1" oninput="calcPrice()">
+    </div>
+    <div class="control-field">
+      <label class="field-label" for="rework-rate">Rework / damage reserve %</label>
+      <input type="number" class="number-input" id="rework-rate" value="1.5" min="0" max="100" step="0.1" oninput="calcPrice()">
+    </div>
+  </div>
+
+  <p class="section-label">Marketing & overhead</p>
+  <div class="control-grid">
+    <div class="control-field">
+      <label class="field-label" for="lead-source">Lead source</label>
+      <select class="select-input" id="lead-source" onchange="handleLeadSource(); calcPrice();">
+        <option value="0" data-name="Repeat / recurring">Repeat / recurring — 0%</option>
+        <option value="0.02" data-name="Referral">Referral — 2%</option>
+        <option value="0.03" data-name="Organic Google">Organic Google — 3%</option>
+        <option value="0.05" data-name="Networking">Networking — 5%</option>
+        <option value="0.10" data-name="Paid advertising" selected>Paid advertising — 10%</option>
+        <option value="custom" data-name="Custom">Custom marketing %</option>
+      </select>
+    </div>
+    <div class="control-field custom-rate-wrap" id="custom-marketing-wrap">
+      <label class="field-label" for="marketing-rate">Custom marketing %</label>
+      <input type="number" class="number-input" id="marketing-rate" value="5" min="0" max="100" step="0.1" oninput="calcPrice()">
+    </div>
+    <div class="control-field">
+      <label class="field-label" for="overhead-rate">Allocated overhead %</label>
+      <input type="number" class="number-input" id="overhead-rate" value="12" min="0" max="100" step="0.1" oninput="calcPrice()">
+    </div>
+    <div class="control-field">
+      <label class="field-label" for="other-direct-costs">Other direct costs ($)</label>
+      <input type="number" class="number-input" id="other-direct-costs" value="0" min="0" max="10000" step="1" oninput="calcPrice()">
+    </div>
+  </div>
+
+  <p class="section-label">Production check</p>
+  <div class="control-grid">
+    <div class="control-field">
+      <label class="field-label" for="crew-hours">Estimated crew-hours</label>
+      <input type="number" class="number-input" id="crew-hours" value="" min="0" max="100" step="0.25" placeholder="Uses quoted hours" oninput="calcPrice()">
+    </div>
+    <div class="control-field">
+      <label class="field-label" for="target-hourly">Target revenue / crew-hour</label>
+      <input type="number" class="number-input" id="target-hourly" value="200" min="0" max="1000" step="5" oninput="calcPrice()">
     </div>
   </div>
 
@@ -1090,20 +1144,57 @@ function getTaxInfo() {
   return { name: option.dataset.name || option.text, rate: parseFloat(select.value) || 0 };
 }
 
+function handleLeadSource() {
+  const isCustom = document.getElementById('lead-source').value === 'custom';
+  document.getElementById('custom-marketing-wrap').classList.toggle('visible', isCustom);
+}
+
+function getMarketingInfo() {
+  const select = document.getElementById('lead-source');
+  const option = select.options[select.selectedIndex];
+  if (select.value === 'custom') {
+    const pct = Math.max(0, parseFloat(document.getElementById('marketing-rate').value) || 0);
+    return { name: 'Custom marketing', rate: pct / 100 };
+  }
+  return { name: option.dataset.name || option.text, rate: parseFloat(select.value) || 0 };
+}
+
 function getProfitModel(preTaxPrice) {
   const tax = getTaxInfo();
+  const marketingInfo = getMarketingInfo();
   const payrollRate = Math.max(0, parseFloat(document.getElementById('payroll-rate').value) || 0) / 100;
+  const payrollBurdenRate = Math.max(0, parseFloat(document.getElementById('payroll-burden-rate').value) || 0) / 100;
   const royaltyRate = Math.max(0, parseFloat(document.getElementById('royalty-rate').value) || 0) / 100;
   const cardRate = Math.max(0, parseFloat(document.getElementById('card-rate').value) || 0) / 100;
+  const reworkRate = Math.max(0, parseFloat(document.getElementById('rework-rate').value) || 0) / 100;
+  const overheadRate = Math.max(0, parseFloat(document.getElementById('overhead-rate').value) || 0) / 100;
   const vehicleSupplies = Math.max(0, parseFloat(document.getElementById('vehicle-supplies').value) || 0);
+  const otherDirectCosts = Math.max(0, parseFloat(document.getElementById('other-direct-costs').value) || 0);
+  const enteredCrewHours = parseFloat(document.getElementById('crew-hours').value);
+  const crewHours = enteredCrewHours > 0 ? enteredCrewHours : Math.max(0, selectedTime || 0);
+  const targetHourly = Math.max(0, parseFloat(document.getElementById('target-hourly').value) || 0);
+
   const grt = preTaxPrice * tax.rate;
   const customerTotal = preTaxPrice + grt;
   const payroll = preTaxPrice * payrollRate;
+  const payrollBurden = preTaxPrice * payrollBurdenRate;
   const royalty = preTaxPrice * royaltyRate;
   const cardFee = customerTotal * cardRate;
-  const profit = preTaxPrice - payroll - royalty - cardFee - vehicleSupplies;
-  const margin = preTaxPrice > 0 ? profit / preTaxPrice : 0;
-  return { tax, grt, customerTotal, payroll, royalty, cardFee, vehicleSupplies, profit, margin };
+  const reworkReserve = preTaxPrice * reworkRate;
+  const directCosts = payroll + payrollBurden + royalty + cardFee + vehicleSupplies + reworkReserve + otherDirectCosts;
+  const contributionProfit = preTaxPrice - directCosts;
+  const contributionMargin = preTaxPrice > 0 ? contributionProfit / preTaxPrice : 0;
+  const marketing = preTaxPrice * marketingInfo.rate;
+  const profitAfterMarketing = contributionProfit - marketing;
+  const overhead = preTaxPrice * overheadRate;
+  const netProfit = profitAfterMarketing - overhead;
+  const netMargin = preTaxPrice > 0 ? netProfit / preTaxPrice : 0;
+  const revenuePerCrewHour = crewHours > 0 ? preTaxPrice / crewHours : 0;
+  const hourlyPass = crewHours <= 0 || targetHourly <= 0 || revenuePerCrewHour >= targetHourly;
+
+  return { tax, marketingInfo, grt, customerTotal, payroll, payrollBurden, royalty, cardFee, vehicleSupplies,
+    reworkReserve, otherDirectCosts, directCosts, contributionProfit, contributionMargin, marketing,
+    profitAfterMarketing, overhead, netProfit, netMargin, crewHours, targetHourly, revenuePerCrewHour, hourlyPass };
 }
 
 function moneyRange(low, high) {
@@ -1231,13 +1322,26 @@ function calcPrice() {
       '<div class="profit-title">Internal job profit estimate</div>' +
       '<div class="profit-row"><span class="profit-label">Pre-tax service price</span><span class="profit-value">' + preTaxDisplay + '</span></div>' +
       '<div class="profit-row"><span class="profit-label">GRT — ' + lowModel.tax.name + ' (' + taxRateDisplay + ')</span><span class="profit-value">' + grtDisplay + '</span></div>' +
-      '<div class="profit-row"><span class="profit-label">Payroll</span><span class="profit-value">' + moneyRange(lowModel.payroll, highModel.payroll) + '</span></div>' +
-      '<div class="profit-row"><span class="profit-label">Royalty</span><span class="profit-value">' + moneyRange(lowModel.royalty, highModel.royalty) + '</span></div>' +
+      '<div class="profit-row"><span class="profit-label">Crew gross payroll</span><span class="profit-value">' + moneyRange(lowModel.payroll, highModel.payroll) + '</span></div>' +
+      '<div class="profit-row"><span class="profit-label">Payroll burden</span><span class="profit-value">' + moneyRange(lowModel.payrollBurden, highModel.payrollBurden) + '</span></div>' +
+      '<div class="profit-row"><span class="profit-label">Royalty / franchise fees</span><span class="profit-value">' + moneyRange(lowModel.royalty, highModel.royalty) + '</span></div>' +
       '<div class="profit-row"><span class="profit-label">Card processing</span><span class="profit-value">' + moneyRange(lowModel.cardFee, highModel.cardFee) + '</span></div>' +
       '<div class="profit-row"><span class="profit-label">Vehicle & supplies</span><span class="profit-value">' + moneyRange(lowModel.vehicleSupplies, highModel.vehicleSupplies) + '</span></div>' +
-      '<div class="profit-row total"><span class="profit-label">Estimated job profit</span><span class="profit-value">' + moneyRange(lowModel.profit, highModel.profit) + '</span></div>' +
-      '<div class="profit-row total"><span class="profit-label">Estimated margin</span><span class="profit-value">' + pctRange(lowModel.margin, highModel.margin) + '</span></div>' +
-      '<div class="profit-note">GRT is added to the customer total and excluded from profit. Card processing is calculated on the full amount charged, including GRT. Verify the rate for the exact service address before invoicing.</div>' +
+      '<div class="profit-row"><span class="profit-label">Rework / damage reserve</span><span class="profit-value">' + moneyRange(lowModel.reworkReserve, highModel.reworkReserve) + '</span></div>' +
+      '<div class="profit-row"><span class="profit-label">Other direct costs</span><span class="profit-value">' + moneyRange(lowModel.otherDirectCosts, highModel.otherDirectCosts) + '</span></div>' +
+      '<div class="profit-row subtotal"><span class="profit-label">Job contribution profit</span><span class="profit-value">' + moneyRange(lowModel.contributionProfit, highModel.contributionProfit) + ' (' + pctRange(lowModel.contributionMargin, highModel.contributionMargin) + ')</span></div>' +
+      '<div class="profit-divider"></div>' +
+      '<div class="profit-row"><span class="profit-label">Marketing — ' + lowModel.marketingInfo.name + '</span><span class="profit-value">' + moneyRange(lowModel.marketing, highModel.marketing) + '</span></div>' +
+      '<div class="profit-row"><span class="profit-label">Allocated company overhead</span><span class="profit-value">' + moneyRange(lowModel.overhead, highModel.overhead) + '</span></div>' +
+      '<div class="profit-row total"><span class="profit-label">Estimated net profit</span><span class="profit-value">' + moneyRange(lowModel.netProfit, highModel.netProfit) + '</span></div>' +
+      '<div class="profit-row total"><span class="profit-label">Estimated net margin</span><span class="profit-value">' + pctRange(lowModel.netMargin, highModel.netMargin) + '</span></div>' +
+      '<div class="profit-row ' + (lowModel.hourlyPass && highModel.hourlyPass ? 'good' : 'warning') + '"><span class="profit-label">Revenue per crew-hour</span><span class="profit-value">' + moneyRange(lowModel.revenuePerCrewHour, highModel.revenuePerCrewHour) + ' / hr</span></div>' +
+      '<div class="profit-status ' + (lowModel.hourlyPass && highModel.hourlyPass ? 'good' : 'warning') + '">' +
+        (lowModel.hourlyPass && highModel.hourlyPass
+          ? 'Production target met: at or above $' + Math.round(lowModel.targetHourly).toLocaleString() + ' per crew-hour.'
+          : 'Review price or hours: this quote falls below the $' + Math.round(lowModel.targetHourly).toLocaleString() + ' per crew-hour target.') +
+      '</div>' +
+      '<div class="profit-note">Contribution profit subtracts direct job costs. Estimated net profit also subtracts marketing and allocated overhead. GRT is added to the customer total and excluded from revenue and profit. Card processing is calculated on the full amount charged, including GRT. Avoid double-counting costs already included in overhead.</div>' +
     '</div>' +
     '<div class="rules-card">' +
       '<div class="rules-title">3 rules. Never break them.</div>' +
