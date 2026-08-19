@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Pink's Quote Calculator</title>
+<style>
+  :root{
+    --ink:#1c2430;
+    --ink-soft:#5b6472;
+    --paper:#f7f5f2;
+    --card:#ffffff;
+    --line:#e7e3dd;
+    --pink:#e0568c;
+    --pink-deep:#b23d6c;
+    --green:#1f8a56;
+    --green-bg:#e8f5ee;
+    --amber:#b6791a;
+    --amber-bg:#fbf1de;
+    --red:#c23c3c;
+    --red-bg:#fbe9e9;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:20px 16px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:480px;margin:0 auto;}
+
+  header{margin-bottom:18px;}
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--pink-deep);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  h1{
+    font-size:22px;
+    margin:0 0 2px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    margin:0;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
+  }
+
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .input-row{
+    display:flex;
+    align-items:center;
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:0 12px;
+    transition:border-color .15s;
+  }
+  .input-row:focus-within{border-color:var(--pink);}
+  .input-row .prefix{
+    color:var(--ink-soft);
+    font-weight:700;
+    font-size:17px;
+    padding-right:2px;
+  }
+  .input-row input{
+    border:none;
+    background:transparent;
+    outline:none;
+    font-size:20px;
+    font-weight:700;
+    color:var(--ink);
+    padding:12px 4px;
+    width:100%;
+    font-family:inherit;
+  }
+  .input-row .suffix{
+    color:var(--ink-soft);
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* Verdict banner */
+  .verdict{
+    border-radius:var(--radius);
+    padding:16px 18px;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:14px;
+    border:1.5px solid transparent;
+  }
+  .verdict .icon{font-size:22px;line-height:1;margin-top:1px;}
+  .verdict .vtitle{font-weight:800;font-size:15.5px;margin-bottom:2px;}
+  .verdict .vdetail{font-size:13px;line-height:1.4;opacity:.9;}
+  .verdict.ok{background:var(--green-bg);color:#1a5c3d;border-color:#bfe3cf;}
+  .verdict.warn{background:var(--amber-bg);color:#7a5211;border-color:#eed9ac;}
+  .verdict.bad{background:var(--red-bg);color:#8a2b2b;border-color:#f0c3c3;}
+  .verdict.empty{background:var(--card);color:var(--ink-soft);border-color:var(--line);}
+
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .stat-row:last-child{border-bottom:none;}
+  .stat-label{font-size:13.5px;color:var(--ink-soft);font-weight:600;}
+  .stat-value{font-size:16px;font-weight:800;text-align:right;}
+  .stat-value.small{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+  .pill{
+    display:inline-block;
+    font-size:10.5px;
+    font-weight:800;
+    padding:2px 7px;
+    border-radius:20px;
+    margin-left:6px;
+    vertical-align:middle;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .pill.ok{background:var(--green-bg);color:var(--green);}
+  .pill.warn{background:var(--amber-bg);color:var(--amber);}
+  .pill.bad{background:var(--red-bg);color:var(--red);}
+
+  .section-title{
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin:0 0 8px;
+  }
+
+  details{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:0;
+    overflow:hidden;
+  }
+  summary{
+    cursor:pointer;
+    padding:14px 18px;
+    font-weight:700;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    list-style:none;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary .chev{transition:transform .15s;font-size:11px;}
+  details[open] summary .chev{transform:rotate(180deg);}
+  .settings-body{padding:0 18px 18px;}
+  .settings-body .field{margin-bottom:12px;}
+  .settings-body .input-row input{font-size:15px;font-weight:600;padding:9px 4px;}
+  .settings-note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;line-height:1.4;}
+  .reset-btn{
+    width:100%;
+    padding:10px;
+    margin-top:4px;
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .reset-btn:active{background:var(--line);}
+
+  footer{
+    text-align:center;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:22px;
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Pink's Windows Albuquerque</div>
+    <h1>Quote Calculator</h1>
+    <p class="sub">Check labor cost before you send it.</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label for="price">Quote price</label>
+      <div class="input-row">
+        <span class="prefix">$</span>
+        <input type="number" id="price" inputmode="decimal" placeholder="0" min="0" step="1">
+      </div>
+    </div>
+    <div class="field">
+      <label for="hours">Estimated hours on site</label>
+      <div class="input-row">
+        <input type="number" id="hours" inputmode="decimal" placeholder="0" min="0" step="0.1">
+        <span class="suffix">hrs</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="verdict" class="verdict empty">
+    <div class="icon">👋</div>
+    <div>
+      <div class="vtitle">Enter a price and hours</div>
+      <div class="vdetail">I'll tell you if this quote hits your numbers.</div>
+    </div>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none;">
+    <div class="stat-row">
+      <span class="stat-label">Labor % of ticket</span>
+      <span class="stat-value" id="laborPct">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Revenue / crew-hour</span>
+      <span class="stat-value" id="revPerHr">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Lead payout <span id="leadPill"></span></span>
+      <span class="stat-value" id="leadPay">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Tech payout <span id="techPill"></span></span>
+      <span class="stat-value" id="techPay">—</span>
+    </div>
+  </div>
+
+  <details id="settingsPanel">
+    <summary>Settings & targets <span class="chev">▾</span></summary>
+    <div class="settings-body">
+      <div class="section-title" style="margin-top:6px;">Commission split</div>
+      <div class="grid2">
+        <div class="field">
+          <label for="basePct">Base total %</label>
+          <div class="input-row"><input type="number" id="basePct" step="1" min="0" max="100"><span class="suffix">%</span></div>
+        </div>
+        <div class="field">
+          <label for="leadShare">Lead share</label>
+          <div class="input-row"><input type="number" id="leadShare" step="1" min="0" max="100"><span class="suffix">%</span></div>
+        </div>
+      </div>
+
+      <div class="section-title">Large-job tier</div>
+      <div class="grid2">
+        <div class="field">
+          <label for="bigThreshold">Ticket over</label>
+          <div class="input-row"><span class="prefix">$</span><input type="number" id="bigThreshold" step="50" min="0"></div>
+        </div>
+        <div class="field">
+          <label for="bigPct">Uses total %</label>
+          <div class="input-row"><input type="number" id="bigPct" step="1" min="0" max="100"><span class="suffix">%</span></div>
+        </div>
+      </div>
+      <div class="settings-note">On jobs over this ticket size, the tool automatically switches to the lower total %, same lead/tech split.</div>
+
+      <div class="section-title" style="margin-top:16px;">Wage & rate targets</div>
+      <div class="field">
+        <label for="minWage">NM minimum wage floor</label>
+        <div class="input-row"><span class="prefix">$</span><input type="number" id="minWage" step="0.25" min="0"><span class="suffix">/hr</span></div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="targetLow">Target rate (near-term)</label>
+          <div class="input-row"><span class="prefix">$</span><input type="number" id="targetLow" step="5" min="0"><span class="suffix">/hr</span></div>
+        </div>
+        <div class="field">
+          <label for="targetHigh">Target rate (goal)</label>
+          <div class="input-row"><span class="prefix">$</span><input type="number" id="targetHigh" step="5" min="0"><span class="suffix">/hr</span></div>
+        </div>
+      </div>
+      <button class="reset-btn" id="resetBtn">Reset to defaults</button>
+    </div>
+  </details>
+
+  <footer>Settings save automatically for next time.<br>Minimum wage checks are informational — always confirm actual pay in Gusto.</footer>
+</div>
+
+<script>
+const DEFAULTS = {
+  basePct: 25,
+  leadShare: 60,
+  bigThreshold: 800,
+  bigPct: 20,
+  minWage: 12,
+  targetLow: 150,
+  targetHigh: 190
+};
+
+const ids = ['basePct','leadShare','bigThreshold','bigPct','minWage','targetLow','targetHigh'];
+let settings = {...DEFAULTS};
+
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem('quote-calc-settings');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      settings = {...DEFAULTS, ...parsed};
+    }
+  }catch(e){
+    // no saved settings yet, or storage blocked - use defaults
+  }
+  ids.forEach(id => { document.getElementById(id).value = settings[id]; });
+}
+
+function saveSettings(){
+  ids.forEach(id => {
+    const v = parseFloat(document.getElementById(id).value);
+    settings[id] = isNaN(v) ? DEFAULTS[id] : v;
+  });
+  try{
+    localStorage.setItem('quote-calc-settings', JSON.stringify(settings));
+  }catch(e){ /* fail silently, tool still works this session */ }
+  calculate();
+}
+
+function fmtMoney(n){
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtMoney0(n){
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function calculate(){
+  const price = parseFloat(document.getElementById('price').value);
+  const hours = parseFloat(document.getElementById('hours').value);
+  const verdictEl = document.getElementById('verdict');
+  const resultsCard = document.getElementById('resultsCard');
+
+  if(!price || !hours || price <= 0 || hours <= 0){
+    verdictEl.className = 'verdict empty';
+    verdictEl.innerHTML = `<div class="icon">👋</div><div><div class="vtitle">Enter a price and hours</div><div class="vdetail">I'll tell you if this quote hits your numbers.</div></div>`;
+    resultsCard.style.display = 'none';
+    return;
+  }
+
+  resultsCard.style.display = 'block';
+
+  const usedBigTier = price >= settings.bigThreshold;
+  const totalPct = (usedBigTier ? settings.bigPct : settings.basePct) / 100;
+  const leadShare = settings.leadShare / 100;
+
+  const pool = price * totalPct;
+  const leadPay = pool * leadShare;
+  const techPay = pool * (1 - leadShare);
+  const leadRate = leadPay / hours;
+  const techRate = techPay / hours;
+  const revPerHr = price / hours;
+
+  document.getElementById('laborPct').textContent = (totalPct*100).toFixed(1) + '%' + (usedBigTier ? ' (large-job tier)' : '');
+  document.getElementById('revPerHr').textContent = fmtMoney0(revPerHr) + '/hr';
+  document.getElementById('leadPay').textContent = fmtMoney(leadPay) + ' · ' + fmtMoney(leadRate) + '/hr';
+  document.getElementById('techPay').textContent = fmtMoney(techPay) + ' · ' + fmtMoney(techRate) + '/hr';
+
+  // tech wage pill
+  const techPill = document.getElementById('techPill');
+  if(techRate < settings.minWage){
+    techPill.innerHTML = '<span class="pill bad">Below min wage</span>';
+  } else if (techRate < settings.minWage * 1.1){
+    techPill.innerHTML = '<span class="pill warn">Thin margin</span>';
+  } else {
+    techPill.innerHTML = '<span class="pill ok">Clears floor</span>';
+  }
+
+  const leadPill = document.getElementById('leadPill');
+  leadPill.innerHTML = leadRate >= settings.targetLow*0.6
+    ? '<span class="pill ok">Healthy</span>'
+    : '<span class="pill warn">Low</span>';
+
+  // Overall verdict logic
+  if(techRate < settings.minWage){
+    verdictEl.className = 'verdict bad';
+    verdictEl.innerHTML = `<div class="icon">🚫</div><div><div class="vtitle">Don't send as-is</div><div class="vdetail">Tech payout works out to ${fmtMoney(techRate)}/hr, under the $${settings.minWage.toFixed(2)} wage floor. Raise the price, tighten the hours, or you'll owe a top-up.</div></div>`;
+  } else if(revPerHr < settings.targetLow){
+    verdictEl.className = 'verdict warn';
+    verdictEl.innerHTML = `<div class="icon">⚠️</div><div><div class="vtitle">Below your target rate</div><div class="vdetail">${fmtMoney0(revPerHr)}/hr is under your ${fmtMoney0(settings.targetLow)}/hr near-term target. Worth a price bump if the job allows it.</div></div>`;
+  } else if(revPerHr < settings.targetHigh){
+    verdictEl.className = 'verdict ok';
+    verdictEl.innerHTML = `<div class="icon">✅</div><div><div class="vtitle">Meets your numbers</div><div class="vdetail">${fmtMoney0(revPerHr)}/hr clears your near-term target. Send it.</div></div>`;
+  } else {
+    verdictEl.className = 'verdict ok';
+    verdictEl.innerHTML = `<div class="icon">🌟</div><div><div class="vtitle">Great ticket</div><div class="vdetail">${fmtMoney0(revPerHr)}/hr is at or above your stretch goal. This is the kind of job to chase more of.</div></div>`;
+  }
+}
+
+document.getElementById('price').addEventListener('input', calculate);
+document.getElementById('hours').addEventListener('input', calculate);
+ids.forEach(id => document.getElementById(id).addEventListener('change', saveSettings));
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  settings = {...DEFAULTS};
+  ids.forEach(id => { document.getElementById(id).value = settings[id]; });
+  try{ localStorage.setItem('quote-calc-settings', JSON.stringify(settings)); }catch(e){}
+  calculate();
+});
+
+loadSettings();
+calculate();
+</script>
+</body>
+</html>
